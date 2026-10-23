@@ -18,6 +18,7 @@ It never runs runbook commands, deploys, rolls back or pages anyone — those st
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -122,11 +123,33 @@ def write_triage(apply):
     return summary
 
 
+ANGLE_PLACEHOLDER = re.compile(r"<([A-Za-z_]+)>")
+# <Vendor> / <rule> in a template mean the display forms, not the raw field values.
+ANGLE_ALIASES = {"vendor": "vendor_title", "rule": "rule_title"}
+
+
+def _to_format_template(template, field_names):
+    """Accept <field> placeholders as well as {field}. Only names that are real fields are
+    converted, so any other angle-bracket text in the template is left alone."""
+    if not any(m.group(1).lower() in field_names or m.group(1).lower() in ANGLE_ALIASES
+               for m in ANGLE_PLACEHOLDER.finditer(template)):
+        return template  # already {field} style (e.g. the built-in template)
+    escaped = template.replace("{", "{{").replace("}", "}}")
+
+    def swap(m):
+        name = m.group(1).lower()
+        if name in ANGLE_ALIASES:
+            return "{" + ANGLE_ALIASES[name] + "}"
+        return "{" + name + "}" if name in field_names else m.group(0)
+
+    return ANGLE_PLACEHOLDER.sub(swap, escaped)
+
+
 def _render(finding, template):
     vendor = finding.get("vendor") or Path(finding.get("contract", "")).stem
     fields = _Blank({**{k: (v if v not in (None, "") else "—") for k, v in finding.items()},
                      "vendor_title": vendor, "rule_title": str(finding.get("rule", "")).replace("_", " ").title()})
-    text = template.format_map(fields)
+    text = _to_format_template(template, set(fields)).format_map(fields)
     title, _, body = text.partition("\n")
     return title.strip().lstrip("# ").strip(), body.strip() + "\n"
 
