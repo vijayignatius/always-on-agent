@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/globex-messaging.md",
+  "vendor": "Globex Messaging Inc.",
+  "rule": "audit_rights",
+  "status": "compliant",
+  "clause_ref": "\u00a73",
+  "quote": "The customer may request an audit of Globex's security controls on 30 days' written notice, not more than twice per calendar year.",
+  "policy_quote": "We must retain the right to audit vendor's controls on at least 30 days' notice. Violation: no audit clause, or audit clause requiring more than 90 days' notice.",
+  "reason": "Audit notice is 30 days, which meets the requirement and is not above the 90-day violation threshold.",
+  "suggested_fix": null
+}

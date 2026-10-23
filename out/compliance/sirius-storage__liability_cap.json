@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/sirius-storage.md",
+  "vendor": "Sirius Storage SDN BHD",
+  "rule": "liability_cap",
+  "status": "violation",
+  "clause_ref": "\u00a75",
+  "quote": "Sirius's aggregate liability under this Agreement is capped at three (3) months of fees paid. This cap applies to all claims, including those arising from data breach or loss.",
+  "policy_quote": "Vendor liability cap must be at least 12 months of fees paid. Violation: cap below 12 months, or cap excludes data breach scenarios.",
+  "reason": "Three months is below the 12-month minimum. The same cap also applies to data-breach claims, so breach liability is limited rather than carved out. Both listed violation conditions are met.",
+  "suggested_fix": "Raise the cap to at least 12 months of fees and carve data-breach claims out of the cap."
+}

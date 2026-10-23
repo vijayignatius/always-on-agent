@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/sirius-storage.md",
+  "vendor": "Sirius Storage SDN BHD",
+  "rule": "subprocessors",
+  "status": "violation",
+  "clause_ref": "\u00a76",
+  "quote": "Sirius may engage any subprocessor it deems appropriate without prior notice to or consent from the customer.",
+  "policy_quote": "Vendor must notify us in writing at least 30 days before adding a new subprocessor. Violation: no notice requirement, or notice <30 days.",
+  "reason": "There is no notice requirement at all. The policy lists that as a violation.",
+  "suggested_fix": "Require at least 30 days' prior written notice before a new subprocessor is added."
+}

@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/acme-data-platform.md",
+  "vendor": "Acme Data Platform Ltd.",
+  "rule": "termination",
+  "status": "compliant",
+  "clause_ref": "\u00a74",
+  "quote": "Termination for convenience is permitted by either party on 90 days' written notice.",
+  "policy_quote": "We must be able to terminate for convenience with no more than 90 days' notice. Violation: termination requires >90 days, or termination for convenience is excluded.",
+  "reason": "Convenience termination is allowed on 90 days, which meets 'no more than 90 days' and is not a listed violation. The same section also requires 120 days' notice of non-renewal; the policy does not cover non-renewal notice, so that term is noted and not scored.",
+  "suggested_fix": null
+}

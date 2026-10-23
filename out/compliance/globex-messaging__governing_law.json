@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/globex-messaging.md",
+  "vendor": "Globex Messaging Inc.",
+  "rule": "governing_law",
+  "status": "compliant",
+  "clause_ref": "\u00a78",
+  "quote": "This Agreement is governed by the laws of England and Wales.",
+  "policy_quote": "Governing law must be a jurisdiction with mature data protection law (England & Wales, Ireland, US Delaware, or similar). Avoid jurisdictions with weak enforcement. Violation: governing law in a jurisdiction without recognised data protection regime.",
+  "reason": "England and Wales is a named acceptable jurisdiction.",
+  "suggested_fix": null
+}

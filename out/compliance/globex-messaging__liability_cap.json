@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/globex-messaging.md",
+  "vendor": "Globex Messaging Inc.",
+  "rule": "liability_cap",
+  "status": "compliant",
+  "clause_ref": "\u00a75",
+  "quote": "Globex's aggregate liability is capped at the fees paid in the 12 months preceding the claim. The cap does not apply to liability for data breach, gross negligence, or wilful misconduct.",
+  "policy_quote": "Vendor liability cap must be at least 12 months of fees paid. Violation: cap below 12 months, or cap excludes data breach scenarios.",
+  "reason": "The cap is 12 months of fees. Data-breach liability is carved out of the cap, so breach claims are uncapped and the clause favours us. It does not cap breach claims below 12 months.",
+  "suggested_fix": null
+}

@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/acme-data-platform.md",
+  "vendor": "Acme Data Platform Ltd.",
+  "rule": "liability_cap",
+  "status": "compliant",
+  "clause_ref": "\u00a75",
+  "quote": "Vendor's aggregate liability under this Agreement is capped at fees paid by the customer in the 12 months preceding the event giving rise to the claim. This cap does not apply to liability arising from a data breach caused by Vendor's gross negligence.",
+  "policy_quote": "Vendor liability cap must be at least 12 months of fees paid. Violation: cap below 12 months, or cap excludes data breach scenarios.",
+  "reason": "The cap is 12 months of fees, which meets the minimum. The cap does not apply to a data breach caused by gross negligence, so breach liability is uncapped in that case and favours us. It does not limit breach claims below 12 months.",
+  "suggested_fix": null
+}

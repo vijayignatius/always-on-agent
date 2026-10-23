@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/acme-data-platform.md",
+  "vendor": "Acme Data Platform Ltd.",
+  "rule": "audit_rights",
+  "status": "needs_review",
+  "clause_ref": "\u00a73",
+  "quote": "The customer may audit Vendor's information security controls once per calendar year, on not less than 60 days' written notice.",
+  "policy_quote": "We must retain the right to audit vendor's controls on at least 30 days' notice. Violation: no audit clause, or audit clause requiring more than 90 days' notice.",
+  "reason": "An audit right exists, so this is not 'no audit clause'. Notice is 60 days, which is more than the 30-day requirement but not more than 90, so it is not the policy's listed violation. A human should decide whether to treat the 30-day shortfall as a gap to negotiate.",
+  "suggested_fix": "Ask legal whether to negotiate the audit notice down to 30 days. Do not open this as a hard violation unless they say so."
+}

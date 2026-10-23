@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/acme-data-platform.md",
+  "vendor": "Acme Data Platform Ltd.",
+  "rule": "data_residency",
+  "status": "violation",
+  "clause_ref": "\u00a72",
+  "quote": "Vendor may process customer data in any region where Vendor maintains infrastructure, including the United States, Ireland, and Singapore. Vendor will use reasonable efforts to keep EU data within EU regions but does not guarantee residency.",
+  "policy_quote": "EU customer data must remain in the EU. Any clause permitting vendor to process EU customer data outside the EU is a violation. Violation: silence on data residency, or any clause allowing US/APAC processing of EU data.",
+  "reason": "\u00a72 allows processing in the United States and Singapore and only promises reasonable efforts to keep EU data in the EU. That is a listed violation: a clause allowing US/APAC processing of EU data.",
+  "suggested_fix": "Amend \u00a72 so EU customer data is processed only in the EU/EEA, with no US or Singapore processing and no 'reasonable efforts' qualifier."
+}

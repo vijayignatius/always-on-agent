@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/globex-messaging.md",
+  "vendor": "Globex Messaging Inc.",
+  "rule": "data_residency",
+  "status": "compliant",
+  "clause_ref": "\u00a72",
+  "quote": "All customer data will be processed exclusively within the European Economic Area (EEA). Globex will not transfer customer data outside the EEA without the customer's prior written consent.",
+  "policy_quote": "EU customer data must remain in the EU. Any clause permitting vendor to process EU customer data outside the EU is a violation. Violation: silence on data residency, or any clause allowing US/APAC processing of EU data.",
+  "reason": "Processing is limited to the EEA, which meets 'EU customer data must remain in the EU' and the acceptable formulation of EU/EEA only. No US or APAC processing is permitted.",
+  "suggested_fix": null
+}

@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/globex-messaging.md",
+  "vendor": "Globex Messaging Inc.",
+  "rule": "termination",
+  "status": "compliant",
+  "clause_ref": "\u00a74",
+  "quote": "The customer may terminate for convenience on 60 days' written notice.",
+  "policy_quote": "We must be able to terminate for convenience with no more than 90 days' notice. Violation: termination requires >90 days, or termination for convenience is excluded.",
+  "reason": "Convenience termination is allowed on 60 days, which is within the 90-day maximum.",
+  "suggested_fix": null
+}

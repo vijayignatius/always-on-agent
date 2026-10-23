@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://always-on-agent.local/schemas/compliance_finding.json",
+  "title": "ComplianceFinding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "vendor",
+    "rule",
+    "status",
+    "clause_ref",
+    "quote",
+    "policy_quote",
+    "reason",
+    "suggested_fix"
+  ],
+  "properties": {
+    "contract": {
+      "type": "string",
+      "description": "Contract filename, e.g. contracts/acme-data-platform.md"
+    },
+    "vendor": {
+      "type": "string",
+      "description": "Vendor name as it appears on the contract"
+    },
+    "rule": {
+      "type": "string",
+      "enum": [
+        "data_residency",
+        "audit_rights",
+        "termination",
+        "liability_cap",
+        "subprocessors",
+        "breach_notification",
+        "governing_law"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["compliant", "violation", "needs_review"]
+    },
+    "clause_ref": {
+      "type": "string",
+      "description": "Section reference, e.g. §7",
+      "examples": ["§7"]
+    },
+    "quote": {
+      "type": "string",
+      "description": "Exact contract text relied on"
+    },
+    "policy_quote": {
+      "type": "string",
+      "description": "Exact policy text relied on"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "suggested_fix": {
+      "type": ["string", "null"]
+    }
+  }
+}

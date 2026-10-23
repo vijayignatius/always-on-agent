@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/acme-data-platform.md",
+  "vendor": "Acme Data Platform Ltd.",
+  "rule": "governing_law",
+  "status": "needs_review",
+  "clause_ref": "\u00a78",
+  "quote": "This Agreement is governed by the laws of the State of California, United States.",
+  "policy_quote": "Governing law must be a jurisdiction with mature data protection law (England & Wales, Ireland, US Delaware, or similar). Avoid jurisdictions with weak enforcement. Violation: governing law in a jurisdiction without recognised data protection regime.",
+  "reason": "California is not one of the named jurisdictions (England & Wales, Ireland, US Delaware). The policy allows 'or similar' and does not list California as a jurisdiction without a recognised data-protection regime. CCPA may make it acceptable. A human has to decide.",
+  "suggested_fix": "Confirm with legal whether California is 'similar' enough. If not, move governing law to England & Wales, Ireland, or Delaware."
+}

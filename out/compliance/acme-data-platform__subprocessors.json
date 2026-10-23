@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/acme-data-platform.md",
+  "vendor": "Acme Data Platform Ltd.",
+  "rule": "subprocessors",
+  "status": "violation",
+  "clause_ref": "\u00a76",
+  "quote": "Vendor maintains a list of subprocessors at vendor.example/subprocessors. Vendor will update the list within 30 days of any change.",
+  "policy_quote": "Vendor must notify us in writing at least 30 days before adding a new subprocessor. Violation: no notice requirement, or notice <30 days.",
+  "reason": "The list is updated within 30 days after a change. The policy requires written notice at least 30 days before a new subprocessor is added. After-the-fact publication is not prior notice.",
+  "suggested_fix": "Require at least 30 days' prior written notice before any new subprocessor is engaged, with a right to object."
+}

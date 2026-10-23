@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/globex-messaging.md",
+  "vendor": "Globex Messaging Inc.",
+  "rule": "subprocessors",
+  "status": "compliant",
+  "clause_ref": "\u00a76",
+  "quote": "Globex will provide the customer with at least 30 days' written notice before engaging any new subprocessor. The customer may object to a new subprocessor within 15 days, in which case Globex will either propose an alternative or the customer may terminate the Agreement.",
+  "policy_quote": "Vendor must notify us in writing at least 30 days before adding a new subprocessor. Violation: no notice requirement, or notice <30 days.",
+  "reason": "Prior written notice is at least 30 days, which meets the requirement. The objection right is additional and not required by the policy.",
+  "suggested_fix": null
+}

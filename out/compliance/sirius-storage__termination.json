@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/sirius-storage.md",
+  "vendor": "Sirius Storage SDN BHD",
+  "rule": "termination",
+  "status": "violation",
+  "clause_ref": "\u00a74",
+  "quote": "Termination for convenience is not permitted during the initial term.",
+  "policy_quote": "We must be able to terminate for convenience with no more than 90 days' notice. Violation: termination requires >90 days, or termination for convenience is excluded.",
+  "reason": "The initial term is 5 years and convenience termination is excluded during it. The policy lists exclusion of termination for convenience as a violation. The 365-day non-renewal notice is outside the policy and is not a separate finding.",
+  "suggested_fix": "Add a right to terminate for convenience on no more than 90 days' written notice during the initial term."
+}

@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/sirius-storage.md",
+  "vendor": "Sirius Storage SDN BHD",
+  "rule": "governing_law",
+  "status": "needs_review",
+  "clause_ref": "\u00a78",
+  "quote": "This Agreement is governed by the laws of Malaysia.",
+  "policy_quote": "Governing law must be a jurisdiction with mature data protection law (England & Wales, Ireland, US Delaware, or similar). Avoid jurisdictions with weak enforcement. Violation: governing law in a jurisdiction without recognised data protection regime.",
+  "reason": "Malaysia is not a named jurisdiction. It has a personal-data statute, so it is not clearly 'a jurisdiction without a recognised data protection regime,' which is the listed violation. The policy's 'or similar' test is a legal judgement. Do not mark this a violation without legal review.",
+  "suggested_fix": "Confirm with legal whether Malaysian law is acceptable. If not, move governing law to England & Wales, Ireland, or Delaware."
+}

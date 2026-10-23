@@ -1,0 +1,11 @@
+{
+  "contract": "contracts/sirius-storage.md",
+  "vendor": "Sirius Storage SDN BHD",
+  "rule": "audit_rights",
+  "status": "violation",
+  "clause_ref": "\u00a73",
+  "quote": "The customer may, on not less than 180 days' notice and not more than once every two years, conduct an audit of Sirius's security controls. All audit costs are borne by the customer.",
+  "policy_quote": "We must retain the right to audit vendor's controls on at least 30 days' notice. Violation: no audit clause, or audit clause requiring more than 90 days' notice.",
+  "reason": "180 days' notice is more than 90. The policy lists an audit clause requiring more than 90 days' notice as a violation.",
+  "suggested_fix": "Reduce audit notice to 30 days, and no more than 90."
+}
