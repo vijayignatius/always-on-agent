@@ -30,8 +30,10 @@ The platform reads only these — keep the names and fields:
   clause_ref, quote, policy_quote, reason, suggested_fix`. Rules: `data_residency, audit_rights,
   termination, liability_cap, subprocessors, breach_notification, governing_law`.
 - **Dev 2 (issue template, optional):** `templates/violation_issue.md`. **First line = issue title.**
-  Placeholders: `{vendor_title} {rule_title} {contract} {clause_ref} {quote} {policy_quote} {reason}
-  {suggested_fix}` (any finding field works). Without it, a built-in template is used.
+  Placeholders in either style — `{field}` or `<field>` (any finding field works): `contract clause_ref quote
+  policy_quote reason suggested_fix`, plus `{vendor_title}` / `<Vendor>` (vendor name) and `{rule_title}` /
+  `<rule>` (readable rule name, e.g. "Liability Cap"). Other `<...>` text is left as-is. Without a template, a
+  built-in one is used. *(Both styles supported since the Dev 2 merge — the plan used `<…>`, this doc `{…}`.)*
 
 `eval/fixtures/perfect/` shows exactly what valid outputs look like.
 

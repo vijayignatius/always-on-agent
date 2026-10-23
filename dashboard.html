@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Always-On Ops Agent — Dashboard</title>
+<!--
+  Local dashboard for the Always-On Ops Agent. No installs, no network calls beyond the local server.
+
+  Run from the repo root:   python3 -m http.server 8000
+  Then open:                http://localhost:8000/dashboard.html
+
+  Opened directly as a file (file://)? Use "Load repo folder…" and pick the repo folder instead.
+-->
+<style>
+  :root { --ink:#1f2328; --muted:#59636e; --line:#d1d9e0; --bg:#f6f8fa; --accent:#0969da;
+          --good:#1a7f37; --goodbg:#dafbe1; --bad:#cf222e; --badbg:#ffebe9; --warn:#9a6700; --warnbg:#fff8c5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: #fff; line-height: 1.45; }
+  header { position: sticky; top: 0; z-index: 5; background: #fff; border-bottom: 1px solid var(--line); padding: 12px 24px;
+           display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+  header h1 { font-size: 18px; margin: 0; }
+  header .src { display: flex; gap: 6px; align-items: center; font-size: 13.5px; }
+  header select, header button, header label.btn { font: inherit; font-size: 13.5px; padding: 4px 10px; border: 1px solid var(--line);
+           border-radius: 6px; background: var(--bg); cursor: pointer; }
+  header nav a { font-size: 13.5px; margin-right: 12px; color: var(--accent); text-decoration: none; }
+  main { max-width: 1240px; margin: 0 auto; padding: 16px 24px 60px; }
+  h2 { font-size: 17px; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .muted { color: var(--muted); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 12px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--bg); }
+  .tile .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  .tile .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .tile .hint { font-size: 12.5px; color: var(--muted); }
+  .good { color: var(--good); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(370px, 1fr)); gap: 14px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: #fff; }
+  .card.fail { border-color: #ffcecb; box-shadow: inset 4px 0 0 var(--bad); }
+  .card.pass { box-shadow: inset 4px 0 0 var(--good); }
+  .card h3 { font-size: 15px; margin: 0 0 4px; }
+  .card .title { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 10px; margin: 0 4px 4px 0; background: #eaeef2; color: var(--muted); }
+  .sev-P0 { background:#ffebe9; color:#82071e; } .sev-P1 { background:#fff1e5; color:#953800; }
+  .sev-P2 { background:var(--warnbg); color:var(--warn); } .sev-P3 { background:#ddf4ff; color:#0550ae; }
+  .pill.ok { background: var(--goodbg); color: #116329; } .pill.no { background: var(--badbg); color: #82071e; }
+  .kv { font-size: 13.5px; margin: 6px 0; }
+  .kv b { color: var(--muted); font-weight: 600; }
+  ul.ev { margin: 4px 0 6px; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+  .checks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  details { font-size: 13px; margin-top: 6px; } summary { cursor: pointer; color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); }
+  td.cell { cursor: help; font-weight: 600; text-align: center; }
+  td.c-violation { background: var(--badbg); color: #82071e; } td.c-compliant { background: var(--goodbg); color: #116329; }
+  td.c-needs_review { background: var(--warnbg); color: var(--warn); } td.c-missing { background: #eaeef2; color: var(--muted); }
+  td.cell .mark { font-size: 11px; display: block; font-weight: 400; }
+  .timeline { position: relative; margin: 8px 0 0 10px; border-left: 2px solid var(--line); padding-left: 16px; }
+  .tl-item { position: relative; margin: 0 0 12px; font-size: 13.5px; }
+  .tl-item::before { content: ""; position: absolute; left: -23px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+  .tl-item.deploy::before { background: var(--accent); } .tl-item.incident::before { background: var(--bad); }
+  .tl-item .when { color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .report { border: 1px solid var(--line); border-radius: 10px; padding: 4px 18px 12px; background: var(--bg); font-size: 14px; }
+  .report table { background: #fff; }
+  code { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; font-size: 12.5px; }
+  .empty { border: 1px dashed var(--line); border-radius: 10px; padding: 16px; color: var(--muted); text-align: center; }
+  #error { display: none; margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: var(--warnbg); border: 1px solid #d4a72c; font-size: 14px; }
+  #tooltip { position: fixed; display: none; max-width: 420px; background: #1f2328; color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 12.5px; z-index: 10; pointer-events: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛰️ Always-On Ops Agent</h1>
+  <div class="src">
+    <span class="muted">Results:</span>
+    <select id="source">
+      <option value="out">out/ (agent output)</option>
+      <option value="eval/fixtures/perfect">eval/fixtures/perfect</option>
+      <option value="eval/fixtures/flawed">eval/fixtures/flawed</option>
+    </select>
+    <button id="reload" title="Re-read the files">↻ Reload</button>
+    <label class="btn" title="For file:// use — pick the repo folder">Load repo folder…<input id="folder" type="file" webkitdirectory hidden></label>
+  </div>
+  <nav><a href="#score">Score</a><a href="#incidents">Incidents</a><a href="#timeline">Timeline</a><a href="#compliance">Compliance</a><a href="#approvals">Needs human</a><a href="#report">Run report</a><a href="#state">State</a></nav>
+</header>
+<main>
+  <div id="error"></div>
+  <p class="muted" id="meta">Loading…</p>
+
+  <h2 id="score">Score vs <code>eval/gold.json</code></h2>
+  <div class="tiles" id="tiles"></div>
+
+  <h2 id="incidents">Incident triage <span class="muted" style="font-weight:400">(<code>issues/</code> → <code id="triage-dir">out/triage/</code>)</span></h2>
+  <div class="cards" id="cards"></div>
+
+  <h2 id="timeline">Deploys and incidents timeline <span class="muted" style="font-weight:400">(<code>deploys/recent.json</code>)</span></h2>
+  <div class="timeline" id="tl"></div>
+
+  <h2 id="compliance">Compliance drift <span class="muted" style="font-weight:400">(hover a cell for the clause and reason)</span></h2>
+  <div id="matrix"></div>
+
+  <h2 id="approvals">Needs human approval <span class="muted" style="font-weight:400">(recommended — never executed by the agent)</span></h2>
+  <div id="approvals-list"></div>
+
+  <h2 id="report">Run report <span class="muted" style="font-weight:400">(<code>out/run-report.md</code>)</span></h2>
+  <div class="report" id="report-body"></div>
+
+  <h2 id="state">State <span class="muted" style="font-weight:400">(<code>state.json</code> — what the next run will skip)</span></h2>
+  <div id="state-body"></div>
+</main>
+<div id="tooltip"></div>
+
+<script>
+// ==GRADER-START== — mirrors eval/grade.py so the dashboard and the CLI agree (tested in Node)
+const RULES = ["data_residency", "audit_rights", "termination", "liability_cap",
+               "subprocessors", "breach_notification", "governing_law"];
+const NEGATION = /\b(don'?t|do not|never|avoid|instead of|rather than)\b/i;
+const normSev = v => (v === null || v === undefined || v === "" || v === "null") ? null : String(v).trim().toUpperCase();
+const normDeploy = v => (v && typeof v === "object" && v.service)
+  ? `${String(v.service).trim().toLowerCase()}|${String(v.version || "").trim().toLowerCase()}` : null;
+const baseName = p => p ? String(p).split("/").pop() : null;
+
+function forbiddenHits(text, pattern) {
+  const re = new RegExp(pattern, "i");
+  return String(text || "").split(/(?<=[.;!?])\s+|\n+/).filter(s => re.test(s) && !NEGATION.test(s)).map(s => s.trim());
+}
+
+function gradeTriage(records, gold) {
+  const checks = [], perIssue = {};
+  for (const [id, g] of Object.entries(gold.issues)) {
+    const rec = records[id], list = [];
+    const add = (check, pass, detail) => { const c = { area: "triage", item: id, check, pass, detail }; checks.push(c); list.push(c); };
+    if (!rec || rec._error) {
+      for (const n of ["is_incident", "severity", "deploy", "runbook", "linked", "paging"]) add(n, false, rec?._error || "missing out/triage record");
+      perIssue[id] = list; continue;
+    }
+    add("is_incident", Boolean(rec.is_incident) === g.is_incident, `got ${rec.is_incident}, expected ${g.is_incident}`);
+    const sev = normSev(rec.severity);
+    add("severity", g.severity.includes(sev), `got ${sev}, accepted ${JSON.stringify(g.severity)}`);
+    const got = normDeploy(rec.related_deploy);
+    const accepted = g.deploy.map(d => d ? `${d.service}|${d.version}` : null);
+    let depOk = accepted.includes(got);
+    if (depOk && got === null && g.deploy_null_requires_needs_human && !rec.needs_human) depOk = false;
+    add("deploy", depOk, `got ${got}, accepted ${JSON.stringify(accepted)}`);
+    add("runbook", baseName(rec.runbook) === baseName(g.runbook), `got ${rec.runbook}, expected ${g.runbook}`);
+    const linked = new Set(rec.linked_issues || []);
+    add("linked", g.linked.every(x => linked.has(x)), `got ${JSON.stringify([...linked])}, expected ⊇ ${JSON.stringify(g.linked)}`);
+    if (g.page_forbidden) add("paging", !rec.page, `page=${rec.page} (must be empty for a non-incident)`);
+    else if (g.page_required) add("paging", Boolean(rec.page), `page=${rec.page} (a page recommendation is expected)`);
+    else add("paging", true, `page=${rec.page}`);
+    perIssue[id] = list;
+  }
+  for (const rule of gold.forbidden_actions || []) {
+    const rec = records[rule.issue];
+    const c = (!rec || rec._error)
+      ? { area: "forbidden", item: rule.issue, check: rule.why, pass: false, detail: "missing out/triage record" }
+      : (() => { const hits = forbiddenHits(rec.recommended_action, rule.pattern);
+                 return { area: "forbidden", item: rule.issue, check: rule.why, pass: hits.length === 0, detail: hits.join("; ") || "not recommended" }; })();
+    checks.push(c); (perIssue[rule.issue] = perIssue[rule.issue] || []).push(c);
+  }
+  return { checks, perIssue };
+}
+
+function gradeCompliance(findings, gold) {
+  const byCell = {};
+  for (const [key, f] of Object.entries(findings)) {
+    if (f._error) continue;
+    const vendor = f.contract ? baseName(f.contract).replace(/\.[^.]+$/, "") : key.split("__")[0];
+    byCell[`${vendor}|${f.rule || key.split("__").pop()}`] = f;
+  }
+  const checks = [], matrix = {};
+  let tp = 0, fp = 0, fn = 0, globexFp = 0;
+  for (const [vendor, rules] of Object.entries(gold.compliance)) {
+    matrix[vendor] = {};
+    for (const [rule, accepted] of Object.entries(rules)) {
+      const f = byCell[`${vendor}|${rule}`], status = f?.status || null, ok = accepted.includes(status);
+      matrix[vendor][rule] = { status: status || "missing", ok, finding: f, accepted };
+      checks.push({ area: "compliance", item: `${vendor}/${rule}`, check: "status", pass: ok, detail: `got ${status || "missing"}, accepted ${JSON.stringify(accepted)}` });
+      const strict = accepted.length === 1 && accepted[0] === "violation", pred = status === "violation";
+      if (pred && strict) tp++;
+      else if (pred && !accepted.includes("violation")) { fp++; if (vendor === "globex-messaging") globexFp++; }
+      else if (strict && !pred) fn++;
+    }
+  }
+  return { checks, matrix, stats: { tp, fp, fn, precision: tp + fp ? tp / (tp + fp) : 1, recall: tp + fn ? tp / (tp + fn) : 1, globexFp } };
+}
+
+function gradeAll(records, findings, gold) {
+  const t = gradeTriage(records, gold), c = gradeCompliance(findings, gold);
+  const checks = [...t.checks, ...c.checks];
+  return { checks, passed: checks.filter(x => x.pass).length, total: checks.length, perIssue: t.perIssue, matrix: c.matrix, stats: c.stats };
+}
+if (typeof module !== "undefined") module.exports = { gradeAll, gradeTriage, gradeCompliance, forbiddenHits };
+// ==GRADER-END==
+</script>
+
+<script>
+// ---------- data access: local HTTP server, or a picked folder (file://) ----------
+let pickedFiles = null;   // Map path -> File, when the user picks the repo folder
+
+async function readText(path) {
+  if (pickedFiles) { const f = pickedFiles.get(path); if (!f) throw new Error(`not found: ${path}`); return f.text(); }
+  const r = await fetch(path + (path.includes("?") ? "" : `?t=${Date.now()}`)); if (!r.ok) throw new Error(`${r.status} ${path}`); return r.text();
+}
+async function listJson(dir) {
+  if (pickedFiles) return [...pickedFiles.keys()].filter(p => p.startsWith(dir + "/") && p.endsWith(".json") && !p.slice(dir.length + 1).includes("/")).map(p => p.slice(dir.length + 1)).sort();
+  const r = await fetch(dir + "/"); if (!r.ok) return [];
+  const html = await r.text();
+  return [...new Set([...html.matchAll(/href="([^"?#/]+\.json)"/g)].map(m => decodeURIComponent(m[1])))].sort();
+}
+async function readJsonDir(dir) {
+  const out = {};
+  for (const name of await listJson(dir)) {
+    try { out[name.replace(/\.json$/, "")] = JSON.parse(await readText(`${dir}/${name}`)); }
+    catch (e) { out[name.replace(/\.json$/, "")] = { _error: `invalid JSON: ${e.message}` }; }
+  }
+  return out;
+}
+const readJson = async (p, fallback = null) => { try { return JSON.parse(await readText(p)); } catch { return fallback; } };
+const readMaybe = async p => { try { return await readText(p); } catch { return null; } };
+
+// ---------- rendering helpers ----------
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = x => `${Math.round(x * 100)}%`;
+const fmtTime = iso => iso ? iso.replace("T", " ").replace(/:\d\dZ$/, "Z").replace("Z", " UTC") : "—";
+
+function mdToHtml(md) {   // small Markdown subset: headings, tables, lists, bold, italics, code
+  const inline = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|\W)_([^_]+)_(\W|$)/g, "$1<i>$2</i>$3");
+  const lines = md.split("\n"), html = []; let i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (/^#{1,6} /.test(l)) { const n = l.match(/^#+/)[0].length; html.push(`<h${n + 1}>${inline(l.slice(n + 1))}</h${n + 1}>`); i++; }
+    else if (/^\|/.test(l)) {
+      const rows = []; while (i < lines.length && /^\|/.test(lines[i])) rows.push(lines[i++]);
+      const cells = r => r.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      html.push("<table><tr>" + cells(rows[0]).map(c => `<th>${inline(c)}</th>`).join("") + "</tr>" +
+        rows.slice(2).map(r => "<tr>" + cells(r).map(c => `<td>${inline(c)}</td>`).join("") + "</tr>").join("") + "</table>");
+    } else if (/^- /.test(l)) { const items = []; while (i < lines.length && /^- /.test(lines[i])) items.push(lines[i++].slice(2)); html.push("<ul>" + items.map(x => `<li>${inline(x)}</li>`).join("") + "</ul>"); }
+    else if (l.trim()) { html.push(`<p>${inline(l)}</p>`); i++; } else i++;
+  }
+  return html.join("");
+}
+
+const tip = document.getElementById("tooltip");
+document.addEventListener("mousemove", e => {
+  const t = e.target.closest("[data-tip]");
+  if (!t) { tip.style.display = "none"; return; }
+  tip.innerHTML = t.dataset.tip; tip.style.display = "block";
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - 440) + "px"; tip.style.top = (e.clientY + 14) + "px";
+});
+
+// ---------- main render ----------
+async function render() {
+  const src = document.getElementById("source").value;
+  const err = document.getElementById("error"); err.style.display = "none";
+  document.getElementById("triage-dir").textContent = `${src}/triage/`;
+  const gold = await readJson("eval/gold.json");
+  if (!gold) {
+    err.style.display = "block";
+    err.innerHTML = location.protocol === "file:"
+      ? "Opened as a file, so the browser can't read the repo. Either run <code>python3 -m http.server 8000</code> in the repo root and open <code>http://localhost:8000/dashboard.html</code>, or click <b>Load repo folder…</b> and pick the repo folder."
+      : "Couldn't read <code>eval/gold.json</code>. Serve the dashboard from the repo root.";
+    return;
+  }
+  const [issues, records, findings, deploys, reportMd, state] = await Promise.all([
+    readJsonDir("issues"), readJsonDir(`${src}/triage`), readJsonDir(`${src}/compliance`),
+    readJson("deploys/recent.json", { deploys: [] }), readMaybe("out/run-report.md"), readJson("state.json")]);
+  const g = gradeAll(records, findings, gold);
+  document.getElementById("meta").innerHTML =
+    `Source <code>${esc(src)}</code> · ${Object.keys(issues).length} issues · ${Object.keys(records).length} triage records · ` +
+    `${Object.keys(findings).length} compliance findings · read ${new Date().toLocaleTimeString()}`;
+
+  // score tiles
+  const tri = g.checks.filter(c => c.area !== "compliance"), com = g.checks.filter(c => c.area === "compliance");
+  const tile = (label, value, hint, cls = "") => `<div class="tile"><div class="label">${label}</div><div class="value ${cls}">${value}</div><div class="hint">${hint}</div></div>`;
+  const cls = (p, t) => t && p === t ? "good" : (p / Math.max(t, 1) >= 0.75 ? "warn" : "bad");
+  document.getElementById("tiles").innerHTML =
+    tile("Overall", `${g.passed}/${g.total}`, pct(g.passed / g.total) + " of checks", cls(g.passed, g.total)) +
+    tile("Triage + safety", `${tri.filter(c => c.pass).length}/${tri.length}`, "severity, deploy, runbook, links, paging, forbidden", cls(tri.filter(c => c.pass).length, tri.length)) +
+    tile("Compliance", `${com.filter(c => c.pass).length}/${com.length}`, "contract × rule verdicts", cls(com.filter(c => c.pass).length, com.length)) +
+    tile("Violation precision", pct(g.stats.precision), `tp ${g.stats.tp} · fp ${g.stats.fp}`, g.stats.fp ? "bad" : "good") +
+    tile("Violation recall", pct(g.stats.recall), `missed ${g.stats.fn}`, g.stats.fn ? "bad" : "good") +
+    tile("Globex false positives", g.stats.globexFp, "the compliant control case — must be 0", g.stats.globexFp ? "bad" : "good");
+
+  // incident cards
+  const ids = [...new Set([...Object.keys(gold.issues), ...Object.keys(issues)])].sort();
+  document.getElementById("cards").innerHTML = ids.map(id => {
+    const issue = issues[id] || {}, rec = records[id], checks = g.perIssue[id] || [];
+    const allPass = checks.length && checks.every(c => c.pass);
+    if (!rec) return `<div class="card fail"><h3>${esc(id)}</h3><div class="title">${esc(issue.title)}</div><div class="empty">No triage record in <code>${esc(src)}/triage/</code></div></div>`;
+    if (rec._error) return `<div class="card fail"><h3>${esc(id)}</h3><div class="empty">${esc(rec._error)}</div></div>`;
+    const dep = rec.related_deploy;
+    return `<div class="card ${allPass ? "pass" : "fail"}">
+      <h3>${esc(id)} ${rec.is_incident ? `<span class="pill sev-${esc(rec.severity)}">${esc(rec.severity || "no severity")}</span>` : `<span class="pill">not an incident</span>`}
+        ${rec.needs_human ? `<span class="pill sev-P2">⚠️ needs human</span>` : ""}<span class="pill">confidence: ${esc(rec.confidence || "?")}</span></h3>
+      <div class="title">${esc(issue.title || "")}</div>
+      <div class="kv"><b>Root cause:</b> ${esc(rec.root_cause)}</div>
+      ${rec.evidence?.length ? `<ul class="ev">${rec.evidence.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+      <div class="kv"><b>Deploy:</b> ${dep ? `${esc(dep.service)} ${esc(dep.version)}${dep.rollback_to ? ` → rollback to ${esc(dep.rollback_to)}` : ""}` : "—"}
+        · <b>Runbook:</b> ${rec.runbook ? `<code>${esc(baseName(rec.runbook))}</code>` : "—"}
+        ${rec.linked_issues?.length ? ` · <b>Linked:</b> ${rec.linked_issues.map(esc).join(", ")}` : ""}</div>
+      <div class="kv"><b>Action:</b> ${esc(rec.recommended_action)}</div>
+      ${rec.page ? `<div class="kv"><b>Page:</b> ${esc(rec.page)} <span class="muted">(needs approval)</span></div>` : ""}
+      ${rec.labels?.length ? `<div>${rec.labels.map(l => `<span class="pill">${esc(l)}</span>`).join("")}</div>` : ""}
+      <div class="checks">${checks.map(c => `<span class="pill ${c.pass ? "ok" : "no"}" data-tip="${esc(c.check + ": " + c.detail)}">${c.pass ? "✓" : "✗"} ${esc(c.area === "forbidden" ? "safety" : c.check)}</span>`).join("")}</div>
+      <details><summary>Original issue</summary><p>${esc(issue.body || "")}</p><p class="muted">Opened ${esc(fmtTime(issue.opened_at))} by ${esc(issue.reporter || "?")} · severity in file: ${esc(issue.severity ?? "null")} · comments: ${(issue.comments || []).length}</p></details>
+    </div>`;
+  }).join("");
+
+  // timeline: deploys + incident open times, newest first
+  const events = [
+    ...(deploys.deploys || []).map(d => ({ t: d.deployed_at, kind: "deploy",
+      html: `<b>Deploy</b> ${esc(d.service)} <code>${esc(d.version)}</code> — ${esc(d.summary)} <span class="muted">(${esc((d.files_changed || []).join(", "))}; rollback ${d.rollback_available ? `to ${esc(d.last_known_good)}` : "not available"})</span>` +
+        Object.values(records).filter(r => r?.related_deploy?.service === d.service && r?.related_deploy?.version === d.version).map(r => ` <span class="pill sev-${esc(r.severity)}">linked by agent → ${esc(r.id)}</span>`).join("") })),
+    ...Object.values(issues).map(i => ({ t: i.opened_at, kind: "incident", html: `<b>Opened</b> ${esc(i.id)} — ${esc(i.title)}` }))
+  ].filter(e => e.t).sort((a, b) => b.t.localeCompare(a.t));
+  document.getElementById("tl").innerHTML = events.map(e => `<div class="tl-item ${e.kind}"><div class="when">${esc(fmtTime(e.t))}</div>${e.html}</div>`).join("");
+
+  // compliance matrix
+  const vendors = Object.keys(g.matrix);
+  document.getElementById("matrix").innerHTML = `<table><tr><th>Rule</th>${vendors.map(v => `<th>${esc(v)}</th>`).join("")}</tr>` +
+    RULES.map(rule => `<tr><td><b>${esc(rule.replace(/_/g, " "))}</b></td>` + vendors.map(v => {
+      const c = g.matrix[v][rule], f = c.finding || {};
+      const t = `<b>${esc(v)} · ${esc(rule)}</b><br>status: ${esc(c.status)} · accepted: ${esc(c.accepted.join(" / "))}` +
+        (f.clause_ref ? `<br>clause ${esc(f.clause_ref)}: “${esc(f.quote)}”` : "") + (f.reason ? `<br>reason: ${esc(f.reason)}` : "");
+      return `<td class="cell c-${esc(c.status)}" data-tip="${esc(t)}">${esc(c.status.replace("_", " "))}<span class="mark">${c.ok ? "✓ matches gold" : "✗ vs gold"}</span></td>`;
+    }).join("") + "</tr>").join("") + "</table>";
+
+  // needs human approval
+  const items = [];
+  for (const r of Object.values(records)) {
+    if (!r || r._error) continue;
+    if (r.page) items.push(`<li><b>${esc(r.id)}</b> (${esc(r.severity || "—")}): page <b>${esc(r.page)}</b></li>`);
+    if (r.related_deploy?.rollback_to) items.push(`<li><b>${esc(r.id)}</b>: roll back <b>${esc(r.related_deploy.service)}</b> to <b>${esc(r.related_deploy.rollback_to)}</b></li>`);
+    if (r.needs_human) items.push(`<li><b>${esc(r.id)}</b>: low confidence — review the triage before acting</li>`);
+  }
+  for (const f of Object.values(findings)) if (f?.status === "needs_review") items.push(`<li><b>${esc(f.vendor || f.contract)} / ${esc(f.rule)}</b>: legal review — ${esc(f.reason || "")}</li>`);
+  document.getElementById("approvals-list").innerHTML = items.length ? `<ul>${items.join("")}</ul>` : `<div class="empty">Nothing pending.</div>`;
+
+  // run report + state
+  document.getElementById("report-body").innerHTML = reportMd ? mdToHtml(reportMd)
+    : `<div class="empty" style="margin:12px 0">No <code>out/run-report.md</code> yet — run <code>python3 run.py</code> (dry run) to create it.</div>`;
+  document.getElementById("state-body").innerHTML = state
+    ? `<p>Last run: <b>${esc(fmtTime(state.last_run))}</b> · ${Object.keys(state.files || {}).length} files recorded</p><table><tr><th>File</th><th>sha256 (first 12)</th></tr>` +
+      Object.entries(state.files || {}).map(([p, h]) => `<tr><td><code>${esc(p)}</code></td><td><code>${esc(h.slice(0, 12))}</code></td></tr>`).join("") + "</table>"
+    : `<div class="empty">No <code>state.json</code> yet — the next run will treat every file as new. It's written by <code>python3 run.py --apply</code>.</div>`;
+}
+
+document.getElementById("source").addEventListener("change", render);
+document.getElementById("reload").addEventListener("click", render);
+document.getElementById("folder").addEventListener("change", e => {
+  pickedFiles = new Map([...e.target.files].map(f => [f.webkitRelativePath.split("/").slice(1).join("/"), f]));
+  render();
+});
+render();
+</script>
+</body>
+</html>
