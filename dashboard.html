@@ -7,8 +7,9 @@
 <!--
   Local dashboard for the Always-On Ops Agent. No installs, no network calls beyond the local server.
 
-  Run from the repo root:   python3 -m http.server 8000
-  Then open:                http://localhost:8000/dashboard.html
+  With action buttons (dry run / grade / apply):   python3 dashboard_server.py
+  Read-only (no buttons):                          python3 -m http.server 8000 --bind 127.0.0.1
+  Then open:                                       http://127.0.0.1:8000/dashboard.html
 
   Opened directly as a file (file://)? Use "Load repo folder…" and pick the repo folder instead.
 -->
@@ -65,6 +66,14 @@
   code { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; font-size: 12.5px; }
   .empty { border: 1px dashed var(--line); border-radius: 10px; padding: 16px; color: var(--muted); text-align: center; }
   #error { display: none; margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: var(--warnbg); border: 1px solid #d4a72c; font-size: 14px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+  .actions button { font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  .actions button:hover:not(:disabled) { background: #eaeef2; }
+  .actions button.write { border-color: #d4a72c; background: var(--warnbg); }
+  .actions button:disabled { opacity: .5; cursor: progress; }
+  #console { background: #0d1117; color: #e6edf3; border-radius: 8px; padding: 10px 14px; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+             white-space: pre-wrap; max-height: 360px; overflow: auto; margin: 0; }
+  #console .cmd { color: #79c0ff; } #console .ok { color: #56d364; } #console .err { color: #ff7b72; }
   #tooltip { position: fixed; display: none; max-width: 420px; background: #1f2328; color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 12.5px; z-index: 10; pointer-events: none; }
 </style>
 </head>
@@ -81,11 +90,14 @@
     <button id="reload" title="Re-read the files">↻ Reload</button>
     <label class="btn" title="For file:// use — pick the repo folder">Load repo folder…<input id="folder" type="file" webkitdirectory hidden></label>
   </div>
-  <nav><a href="#score">Score</a><a href="#incidents">Incidents</a><a href="#timeline">Timeline</a><a href="#compliance">Compliance</a><a href="#approvals">Needs human</a><a href="#report">Run report</a><a href="#state">State</a></nav>
+  <nav><a href="#actions">Actions</a><a href="#score">Score</a><a href="#incidents">Incidents</a><a href="#timeline">Timeline</a><a href="#compliance">Compliance</a><a href="#approvals">Needs human</a><a href="#report">Run report</a><a href="#state">State</a></nav>
 </header>
 <main>
   <div id="error"></div>
   <p class="muted" id="meta">Loading…</p>
+
+  <h2 id="actions">Actions <span class="muted" style="font-weight:400">(runs the platform's commands locally — nothing calls Claude or GitHub)</span></h2>
+  <div id="actions-body"><div class="empty">Checking for the action server…</div></div>
 
   <h2 id="score">Score vs <code>eval/gold.json</code></h2>
   <div class="tiles" id="tiles"></div>
@@ -346,13 +358,59 @@ async function render() {
     : `<div class="empty">No <code>state.json</code> yet — the next run will treat every file as new. It's written by <code>python3 run.py --apply</code>.</div>`;
 }
 
+// ---------- actions (only when served by dashboard_server.py) ----------
+const ACTION_BUTTONS = [
+  { id: "dry-run", text: "▶ Dry run", hint: "Grade + write out/run-report.md + show planned write-back. Writes nothing else." },
+  { id: "grade", text: "✓ Grade", hint: "Score out/ against eval/gold.json." },
+  { id: "state", text: "≡ Check state", hint: "What's new / changed since the last applied run." },
+  { id: "apply", text: "⚠ Apply write-back", write: true,
+    hint: "Writes issues/*.json (severity, labels, one comment), compliance-issues/*.md and state.json. Idempotent." },
+];
+
+async function setupActions() {
+  const box = document.getElementById("actions-body");
+  if (pickedFiles || location.protocol === "file:") {
+    box.innerHTML = `<div class="empty">Buttons need the action server: run <code>python3 dashboard_server.py</code> and open <code>http://127.0.0.1:8000/dashboard.html</code>.</div>`; return;
+  }
+  let info;
+  try { const r = await fetch("/api/actions", { cache: "no-store" }); if (!r.ok) throw 0; info = await r.json(); }
+  catch {
+    box.innerHTML = `<div class="empty">Read-only mode — this page is served by a plain file server. For buttons, stop it and run <code>python3 dashboard_server.py</code>.</div>`; return;
+  }
+  box.innerHTML = `<div class="actions">${ACTION_BUTTONS.map(b =>
+      `<button data-action="${b.id}" class="${b.write ? "write" : ""}" title="${esc(b.hint)}">${esc(b.text)}</button>`).join("")}</div>
+    <p class="muted" style="font-size:13px;margin:4px 0 8px">Apply asks for confirmation. Opening GitHub issues (<code>--github</code>) is CLI-only on purpose — the fork is public.</p>
+    <pre id="console"><span class="cmd">ready.</span> Results refresh automatically after each action.</pre>`;
+  box.querySelectorAll("button[data-action]").forEach(btn => btn.addEventListener("click", () => runAction(btn.dataset.action)));
+}
+
+async function runAction(name) {
+  const def = ACTION_BUTTONS.find(b => b.id === name), con = document.getElementById("console");
+  let body = {};
+  if (def.write) {
+    if (!confirm("Apply write-back?\n\nThis WRITES to the repo:\n • issues/*.json — severity, labels, one agent comment each\n • compliance-issues/*.md — one file per violation\n • state.json — marks files as processed\n\nIt never posts duplicates. Commit or discard the changes with git afterwards.")) return;
+    body = { confirm: "APPLY" };
+  }
+  const buttons = document.querySelectorAll("button[data-action]");
+  buttons.forEach(b => b.disabled = true);
+  con.innerHTML = `<span class="cmd">$ ${esc(name)} …</span>`;
+  try {
+    const r = await fetch(`/api/run/${encodeURIComponent(name)}`, {
+      method: "POST", headers: { "Content-Type": "application/json", "X-Dashboard": "1" }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) con.innerHTML = `<span class="err">✗ ${esc(j.error || r.status)}</span>`;
+    else con.innerHTML = `<span class="cmd">$ ${esc(j.command)}</span>  <span class="${j.exit_code === 0 ? "ok" : "err"}">exit ${j.exit_code} · ${j.seconds}s</span>\n\n${esc(j.output)}`;
+  } catch (e) { con.innerHTML = `<span class="err">✗ request failed: ${esc(e.message)}</span>`; }
+  finally { buttons.forEach(b => b.disabled = false); await render(); }
+}
+
 document.getElementById("source").addEventListener("change", render);
 document.getElementById("reload").addEventListener("click", render);
 document.getElementById("folder").addEventListener("change", e => {
   pickedFiles = new Map([...e.target.files].map(f => [f.webkitRelativePath.split("/").slice(1).join("/"), f]));
-  render();
+  render(); setupActions();
 });
-render();
+render(); setupActions();
 </script>
 </body>
 </html>

@@ -13,6 +13,8 @@ The always-on loop around the two agent capabilities: **state** (only process wh
 | `writeback.py` | Writes triage back to `issues/*.json` and one issue per compliance violation — never duplicates |
 | `report.py` | Writes `out/run-report.md` (changes, triage, needs-human, compliance matrix, write-back, score) |
 | `run.py` | One pass: diff state → write-back → report → record state (in that order) |
+| `dashboard.html` | Local dashboard: score, incidents, timeline, compliance matrix, approvals, report, state |
+| `dashboard_server.py` | Serves the dashboard on 127.0.0.1 and runs the allowlisted commands from its buttons |
 | `eval/gold.json` | Expected answers: 5 issues + 21 contract × rule findings (judgement calls accept >1 value) |
 | `eval/grade.py` | Scores `out/` against the gold set |
 | `eval/fixtures/perfect/`, `eval/fixtures/flawed/` | Sample outputs to test the grader and write-back |
@@ -47,6 +49,28 @@ python3 run.py                                     # dry run: report + planned w
 python3 run.py --apply                             # write back, report, record state.json
 python3 run.py --apply --github                    # ...and open GitHub issues (gh default repo = the fork)
 ```
+
+## Dashboard
+
+```bash
+python3 dashboard_server.py          # open http://127.0.0.1:8000/dashboard.html
+```
+
+`dashboard.html` shows the score, incident cards, deploy timeline, compliance matrix, approvals, run report and
+state, and **grades in the browser** (identical to `eval/grade.py`). Served by `dashboard_server.py` it also has
+**action buttons**: Dry run, Grade, Check state, and Apply write-back. Served by plain `python3 -m http.server`
+it's read-only.
+
+`dashboard_server.py` guardrails (standard library only):
+- binds **127.0.0.1** and rejects other `Host`/`Origin` values, plus requires an `X-Dashboard` header, so another
+  website can't make your browser trigger a run;
+- **fixed allowlist**: `run.py`, `run.py --apply`, `eval/grade.py`, `state.py`. No client-supplied commands or args;
+- **Apply requires confirmation** (UI dialog and a server-side `{"confirm": "APPLY"}` check);
+- **no `--github` from the UI** (the fork is public; opening issues stays a deliberate CLI step);
+- one action at a time (`409` otherwise), 120 s timeout, hidden paths (`.git`, `.env`…) never served.
+
+Apply writes to the **real** `issues/`, `compliance-issues/` and `state.json`. Review with `git diff`, then commit
+or discard (`git checkout -- issues && rm -rf compliance-issues state.json`).
 
 ## How a run works
 
